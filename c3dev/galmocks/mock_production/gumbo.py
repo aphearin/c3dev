@@ -15,7 +15,7 @@ from ..utils.matchup import compute_uber_host_indx, calculate_indx_correspondenc
 TNG_KEYS_TO_INHERIT = ("SubhaloSFR", "SubhaloMassType")
 
 
-def make_gumbo_v0p0(target_sim_fn, um_snap_fn):
+def make_v0p0(target_sim_fn, um_snap_fn):
     """"""
     # Read from disk
     unit_sim = Table(read_unit_sim(target_sim_fn))

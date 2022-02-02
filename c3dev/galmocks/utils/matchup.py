@@ -10,7 +10,7 @@ def _get_data_block(*halo_properties):
     return np.vstack(halo_properties).T
 
 
-def calculate_indx_correspondence(source_props, target_props):
+def calculate_indx_correspondence(source_props, target_props, n_threads=-1):
     """For each target data object, find a closely matching source data object
 
     Parameters
@@ -34,7 +34,7 @@ def calculate_indx_correspondence(source_props, target_props):
     X_source = _get_data_block(*source_props)
     X_target = _get_data_block(*target_props)
     source_tree = cKDTree(X_source)
-    dd_match, indx_match = source_tree.query(X_target)
+    dd_match, indx_match = source_tree.query(X_target, workers=n_threads)
     return dd_match, indx_match
 
 
