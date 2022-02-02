@@ -85,6 +85,9 @@ def map_um_mstar_sfr_onto_unit(unit_sim, um, keys_to_inherit):
     target_props = [unit_sim[key][cenmsk_unit] for key in target_keys]
     _res = calculate_indx_correspondence(source_props, target_props)
     dd_match_cens, indx_match_cens = _res
+    inherited_props_cens = [
+        um[key][cenmsk_um][indx_match_cens] for key in keys_to_inherit
+    ]
 
     source_keys = ["host_mvir_lgcnd", "lgmu", "host_vmax_perc"]
     source_props = [um[key][~cenmsk_um] for key in source_keys]
@@ -92,19 +95,21 @@ def map_um_mstar_sfr_onto_unit(unit_sim, um, keys_to_inherit):
     target_props = [unit_sim[key][~cenmsk_unit] for key in target_keys]
     _res = calculate_indx_correspondence(source_props, target_props)
     dd_match_sats, indx_match_sats = _res
+    inherited_props_sats = [
+        um[key][~cenmsk_um][indx_match_sats] for key in keys_to_inherit
+    ]
 
     n_unit = len(unit_sim)
-
-    dd_match = np.zeros(n_unit).astype(float)
-    dd_match[cenmsk_unit] = dd_match_cens
-    dd_match[~cenmsk_unit] = dd_match_sats
 
     indx_match = np.zeros(n_unit).astype(int)
     indx_match[cenmsk_unit] = indx_match_cens
     indx_match[~cenmsk_unit] = indx_match_sats
 
-    for key in keys_to_inherit:
-        unit_sim["um_" + key] = um[key][indx_match]
+    for i, key in enumerate(keys_to_inherit):
+        unit_sim["um_" + key] = np.zeros(n_unit)
+        unit_sim["um_" + key][cenmsk_unit] = inherited_props_cens[i]
+        unit_sim["um_" + key][~cenmsk_unit] = inherited_props_sats[i]
+
     return unit_sim
 
 
