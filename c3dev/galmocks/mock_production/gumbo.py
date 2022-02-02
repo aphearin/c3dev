@@ -9,7 +9,7 @@ from ..galhalo_models.smhm import _get_cen_sat_percentile, mc_logsm
 from ..galhalo_models.smhm import DEFAULT_SMHM_SCATTER, DEFAULT_SMHM_PARAMS
 from ..data_loaders.load_unit_sims import read_unit_sim, UNIT_SIM_LBOX
 from ..data_loaders.load_umachine import read_sfr_snapshot, SMDPL_LBOX
-from ..utils.matchup import compute_uber_host_indx
+from ..utils.matchup import compute_uber_host_indx, calculate_indx_correspondence
 
 
 TNG_KEYS_TO_INHERIT = ("SubhaloSFR", "SubhaloMassType")
@@ -30,27 +30,27 @@ def make_gumbo_v0p0(target_sim_fn, um_snap_fn):
     )
     um["uber_hostindx"] = compute_uber_host_indx(um["upid"], um["id"])
 
-    um["hostid"] = um["id"][um["uber_hostindx"]]
-    unit_sim["hostid"] = unit_sim["halo_id"][unit_sim["uber_hostindx"]]
+    um["uber_hostid"] = um["id"][um["uber_hostindx"]]
+    unit_sim["uber_hostid"] = unit_sim["halo_id"][unit_sim["uber_hostindx"]]
 
     um["host_mvir"] = um["m"][um["uber_hostindx"]]
     unit_sim["host_mvir"] = unit_sim["halo_mvir"][unit_sim["uber_hostindx"]]
 
-    um["mu"] = um["m"] / um["host_mvir"]
-    unit_sim["mu"] = unit_sim["halo_mvir"] / unit_sim["host_mvir"]
+    um["lgmu"] = np.log10(um["m"] / um["host_mvir"])
+    unit_sim["lgmu"] = np.log10(unit_sim["halo_mvir"] / unit_sim["host_mvir"])
 
     um["host_vmax"] = um["v"][um["uber_hostindx"]]
     unit_sim["host_conc"] = unit_sim["halo_nfw_conc"][unit_sim["uber_hostindx"]]
 
-    cenmsk_unit = unit_sim["hostid"] == unit_sim["halo_id"]
+    cenmsk_unit = unit_sim["uber_hostid"] == unit_sim["halo_id"]
     unit_mvir_cens_rank = 1 + rank_order_function(unit_sim["host_mvir"][cenmsk_unit])
     unit_mvir_cens_cnd = unit_mvir_cens_rank / unit_sim_vbox
 
-    unit_sim["host_mvir_lgcnd"] = np.zeros_like(um["host_mvir"])
+    unit_sim["host_mvir_lgcnd"] = np.zeros_like(unit_sim["host_mvir"])
     unit_sim["host_mvir_lgcnd"][cenmsk_unit] = unit_mvir_cens_cnd
     unit_sim["host_mvir_lgcnd"] = unit_sim["host_mvir_lgcnd"][unit_sim["uber_hostindx"]]
 
-    cenmsk_um = um["hostid"] == um["id"]
+    cenmsk_um = um["uber_hostid"] == um["id"]
     um_mvir_cens_rank = 1 + rank_order_function(um["host_mvir"][cenmsk_um])
     um_mvir_cens_cnd = um_mvir_cens_rank / smdpl_vbox
 
@@ -65,12 +65,47 @@ def make_gumbo_v0p0(target_sim_fn, um_snap_fn):
     um["host_vmax_perc"] = um["host_vmax_perc"][um["uber_hostindx"]]
 
     unit_sim["host_conc_perc"] = -1.0
-    unit_sim["host_conc_perc"][cenmsk_um] = sliding_conditional_percentile(
-        unit_sim["halo_mvir"][cenmsk_um], unit_sim["halo_nfw_conc"][cenmsk_um], 201
+    unit_sim["host_conc_perc"][cenmsk_unit] = sliding_conditional_percentile(
+        unit_sim["halo_mvir"][cenmsk_unit], unit_sim["halo_nfw_conc"][cenmsk_unit], 201
     )
     unit_sim["host_conc_perc"] = unit_sim["host_conc_perc"][unit_sim["uber_hostindx"]]
 
+    unit_sim.remove_columns(("halo_hostid", "halo_rs"))
+
     return unit_sim, um
+
+
+def map_um_mstar_sfr_onto_unit(unit_sim, um, keys_to_inherit):
+    cenmsk_unit = unit_sim["uber_hostid"] == unit_sim["halo_id"]
+    cenmsk_um = um["uber_hostid"] == um["id"]
+
+    source_keys = ["host_mvir_lgcnd", "host_vmax_perc"]
+    source_props = [um[key][cenmsk_um] for key in source_keys]
+    target_keys = ["host_mvir_lgcnd", "host_conc_perc"]
+    target_props = [unit_sim[key][cenmsk_unit] for key in target_keys]
+    _res = calculate_indx_correspondence(source_props, target_props)
+    dd_match_cens, indx_match_cens = _res
+
+    source_keys = ["host_mvir_lgcnd", "lgmu", "host_vmax_perc"]
+    source_props = [um[key][~cenmsk_um] for key in source_keys]
+    target_keys = ["host_mvir_lgcnd", "lgmu", "host_conc_perc"]
+    target_props = [unit_sim[key][~cenmsk_unit] for key in target_keys]
+    _res = calculate_indx_correspondence(source_props, target_props)
+    dd_match_sats, indx_match_sats = _res
+
+    n_unit = len(unit_sim)
+
+    dd_match = np.zeros(n_unit).astype(float)
+    dd_match[cenmsk_unit] = dd_match_cens
+    dd_match[~cenmsk_unit] = dd_match_sats
+
+    indx_match = np.zeros(n_unit).astype(int)
+    indx_match[cenmsk_unit] = indx_match_cens
+    indx_match[~cenmsk_unit] = indx_match_sats
+
+    for key in keys_to_inherit:
+        unit_sim["um_" + key] = um[key][indx_match]
+    return unit_sim
 
 
 def make_mock(target_sim_subhalos, ran_key):
