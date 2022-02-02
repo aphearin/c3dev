@@ -1,9 +1,10 @@
 """
 """
-import os
 import numpy as np
 
-BEBOP = "/lcrc/project/halotools/C3GMC/UM/SMDPL/SFR_snapshot_binaries"
+BEBOP_DRN = "/lcrc/project/halotools/C3GMC/UM/SMDPL/SFR_snapshot_binaries"
+BASENAME = "sfr_catalog_0.550400.bin"
+SMDPL_LBOX = 400.0  # Mpc/h
 
 DTYPE = np.dtype(
     dtype=[
@@ -36,7 +37,5 @@ DTYPE = np.dtype(
 )
 
 
-def read_sfr_snapshot(drn, bn="sfr_catalog_0.550400.bin"):
-    fn = os.path.join(drn, bn)
-    subhalos = np.fromfile(fn, dtype=DTYPE)
-    return subhalos
+def read_sfr_snapshot(fn):
+    return np.fromfile(fn, dtype=DTYPE)
