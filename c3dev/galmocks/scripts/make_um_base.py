@@ -71,7 +71,7 @@ if __name__ == "__main__":
         "halo_vz",
         "halo_mvir",
     )
-    n_output_mock = galsampler_res.target_gals_target_halo_ids
+    n_output_mock = galsampler_res.target_gals_target_halo_ids.size
     idxA, idxB = crossmatch(galsampler_res.target_gals_target_halo_ids, unit["halo_id"])
     output_mock = Table()
     for key in keys_to_inherit_from_unit:
@@ -80,16 +80,24 @@ if __name__ == "__main__":
     t7 = time()
     print("{0:.1f} seconds to inherit from unit with crossmatch".format(t7 - t6))
 
-    # Inherit from UM as we write to disk
+    # Inherit from UM
     keys_to_inherit_from_um = "m", "sm", "sfr", "uber_host_haloid", "id", "mhost"
-    with h5py.File(args.outname, "w") as hdf:
-        for key in keys_to_inherit_from_um:
-            hdf["um_" + key] = um[key][galsampler_res.target_gals_selection_indx]
-        hdf["galsampler_target_halo_ids"] = galsampler_res.target_gals_target_halo_ids
-        hdf["galsampler_source_halo_ids"] = galsampler_res.target_gals_source_halo_ids
-        for key in output_mock.keys():
-            hdf[key] = output_mock[key]
+    for key in keys_to_inherit_from_um:
+        output_mock["um_" + key] = um[key][galsampler_res.target_gals_selection_indx]
+    output_mock[
+        "galsampler_target_halo_ids"
+    ] = galsampler_res.target_gals_target_halo_ids
+    output_mock[
+        "galsampler_source_halo_ids"
+    ] = galsampler_res.target_gals_source_halo_ids
     t8 = time()
+    print("{0:.1f} seconds to inherit from uM".format(t8 - t7))
 
-    print("{0:.1f} seconds to write mock to disk".format(t8 - t7))
-    print("{0:.1f} seconds total runtime".format(t8 - t0))
+    tng_phot_sample_fn = "/lcrc/project/halotools/C3GMC/TNG300-1/tng_phot_sample.h5"
+    tng_phot_sample = Table.read(tng_phot_sample_fn, path="data")
+
+    # Write to disk
+    output_mock.write(args.outname, path="data")
+
+    t9 = time()
+    print("{0:.1f} seconds total runtime".format(t9 - t0))
