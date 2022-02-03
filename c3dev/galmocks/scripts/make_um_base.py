@@ -8,6 +8,7 @@ from c3dev.galmocks.data_loaders.load_umachine import DTYPE as UM_DTYPE
 from c3dev.galmocks.utils import matchup, galmatch
 import h5py
 
+UM_LOGSM_CUT = 9.0
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser()
@@ -18,6 +19,8 @@ if __name__ == "__main__":
 
     t0 = time()
     um = Table(np.fromfile(args.um_fn, dtype=UM_DTYPE))
+    logsm_msk = um["sm"] > UM_LOGSM_CUT
+    um = um[logsm_msk]
     t1 = time()
     unit = Table.read(args.unit_sim_fn, path="data")
     t2 = time()
