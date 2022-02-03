@@ -169,8 +169,9 @@ if __name__ == "__main__":
         output_mock["unit_halo_vz"] + output_mock["um_host_delta_pos"][:, 5]
     )
 
-    # output_cut_msk = output_mock["um_logsm"] > OUTPUT_LOGSM_CUT
-    # output_mock = output_mock[output_cut_msk]
+    # Reduce mock size
+    output_cut_msk = output_mock["um_logsm"] > OUTPUT_LOGSM_CUT
+    output_mock = output_mock[output_cut_msk]
 
     # Write to disk
     output_mock.write(args.outname, path="data")
