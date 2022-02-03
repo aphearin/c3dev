@@ -45,7 +45,7 @@ if __name__ == "__main__":
     target_halo_ids = unit["halo_id"][cenmsk_unit]
     source_halo_props = (um["m"][cenmsk_um],)
     target_halo_props = (unit["halo_mvir"][cenmsk_unit],)
-    args = (
+    d = (
         source_galaxies_host_halo_id,
         source_halo_ids,
         target_halo_ids,
@@ -53,7 +53,7 @@ if __name__ == "__main__":
         target_halo_props,
     )
     t5 = time()
-    galsampler_res = galmatch.compute_source_galaxy_selection_indices(*args)
+    galsampler_res = galmatch.compute_source_galaxy_selection_indices(*d)
     t6 = time()
     print("{0:.1f} seconds to galsample".format(t6 - t5))
 
