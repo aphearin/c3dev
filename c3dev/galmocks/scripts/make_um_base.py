@@ -6,6 +6,7 @@ from time import time
 from astropy.table import Table
 from c3dev.galmocks.data_loaders.load_umachine import DTYPE as UM_DTYPE
 from c3dev.galmocks.utils import matchup, galmatch
+from halotools.utils import crossmatch
 import h5py
 
 UM_LOGSM_CUT = 9.0
@@ -60,13 +61,35 @@ if __name__ == "__main__":
     t6 = time()
     print("{0:.1f} seconds to galsample".format(t6 - t5))
 
-    keys_to_inherit = "m", "sm", "sfr", "uber_host_haloid", "id", "mhost"
-    with h5py.File(args.outname, "w") as hdf:
-        for key in keys_to_inherit:
-            hdf["um_" + key] = um[key][galsampler_res.target_gals_selection_indx]
-        hdf["target_halo_ids"] = galsampler_res.target_gals_target_halo_ids
-        hdf["source_halo_ids"] = galsampler_res.target_gals_source_halo_ids
-
+    # Inherit from UNIT
+    keys_to_inherit_from_unit = (
+        "halo_x",
+        "halo_y",
+        "halo_z",
+        "halo_vx",
+        "halo_vy",
+        "halo_vz",
+        "halo_mvir",
+    )
+    n_output_mock = galsampler_res.target_gals_target_halo_ids
+    idxA, idxB = crossmatch(galsampler_res.target_gals_target_halo_ids, unit["halo_id"])
+    output_mock = Table()
+    for key in keys_to_inherit_from_unit:
+        output_mock["unit_" + key] = np.zeros(n_output_mock)
+        output_mock["unit_" + key][idxA] = unit[key][idxB]
     t7 = time()
-    print("{0:.1f} seconds to write mock to disk".format(t7 - t6))
-    print("{0:.1f} seconds total runtime".format(t7 - t0))
+    print("{0:.1f} seconds to inherit from unit with crossmatch".format(t7 - t6))
+
+    # Inherit from UM as we write to disk
+    keys_to_inherit_from_um = "m", "sm", "sfr", "uber_host_haloid", "id", "mhost"
+    with h5py.File(args.outname, "w") as hdf:
+        for key in keys_to_inherit_from_um:
+            hdf["um_" + key] = um[key][galsampler_res.target_gals_selection_indx]
+        hdf["galsampler_target_halo_ids"] = galsampler_res.target_gals_target_halo_ids
+        hdf["galsampler_source_halo_ids"] = galsampler_res.target_gals_source_halo_ids
+        for key in output_mock.keys():
+            hdf[key] = output_mock[key]
+    t8 = time()
+
+    print("{0:.1f} seconds to write mock to disk".format(t8 - t7))
+    print("{0:.1f} seconds total runtime".format(t8 - t0))
