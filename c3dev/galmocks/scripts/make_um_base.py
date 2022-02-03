@@ -43,8 +43,8 @@ if __name__ == "__main__":
     source_galaxies_host_halo_id = um["uber_host_haloid"]
     source_halo_ids = um["id"][cenmsk_um]
     target_halo_ids = unit["halo_id"][cenmsk_unit]
-    source_halo_props = (um["m"][cenmsk_um],)
-    target_halo_props = (unit["halo_mvir"][cenmsk_unit],)
+    source_halo_props = (np.log10(um["m"][cenmsk_um]),)
+    target_halo_props = (np.log10(unit["halo_mvir"][cenmsk_unit]),)
     d = (
         source_galaxies_host_halo_id,
         source_halo_ids,
