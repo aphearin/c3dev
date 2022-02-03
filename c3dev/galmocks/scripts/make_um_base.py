@@ -18,6 +18,7 @@ def compute_lg_ssfr(mstar, sfr, lgssfr_q=-11.8, low_ssfr_cut=1e-12):
 
 
 UM_LOGSM_CUT = 9.0
+OUTPUT_LOGSM_CUT = 9.5
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser()
@@ -150,23 +151,26 @@ if __name__ == "__main__":
 
     # Assign positions
     rhalo_ratio = output_mock["unit_halo_rvir"] * output_mock["um_rvir_host"]
-    dx = output_mock["um_delta_pos"][:, 0] * rhalo_ratio
-    dy = output_mock["um_delta_pos"][:, 1] * rhalo_ratio
-    dz = output_mock["um_delta_pos"][:, 2] * rhalo_ratio
+    dx = output_mock["um_host_delta_pos"][:, 0] * rhalo_ratio
+    dy = output_mock["um_host_delta_pos"][:, 1] * rhalo_ratio
+    dz = output_mock["um_host_delta_pos"][:, 2] * rhalo_ratio
 
     output_mock["galaxy_x"] = output_mock["unit_halo_x"] + dx
     output_mock["galaxy_y"] = output_mock["unit_halo_y"] + dy
     output_mock["galaxy_z"] = output_mock["unit_halo_z"] + dz
 
     output_mock["galaxy_vx"] = (
-        output_mock["unit_halo_vx"] + output_mock["um_delta_pos"][:, 3]
+        output_mock["unit_halo_vx"] + output_mock["um_host_delta_pos"][:, 3]
     )
     output_mock["galaxy_vy"] = (
-        output_mock["unit_halo_vy"] + output_mock["um_delta_pos"][:, 4]
+        output_mock["unit_halo_vy"] + output_mock["um_host_delta_pos"][:, 4]
     )
     output_mock["galaxy_vz"] = (
-        output_mock["unit_halo_vz"] + output_mock["um_delta_pos"][:, 5]
+        output_mock["unit_halo_vz"] + output_mock["um_host_delta_pos"][:, 5]
     )
+
+    # output_cut_msk = output_mock["um_logsm"] > OUTPUT_LOGSM_CUT
+    # output_mock = output_mock[output_cut_msk]
 
     # Write to disk
     output_mock.write(args.outname, path="data")
