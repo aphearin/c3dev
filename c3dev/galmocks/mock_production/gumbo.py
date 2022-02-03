@@ -101,10 +101,6 @@ def map_um_mstar_sfr_onto_unit(unit_sim, um, keys_to_inherit):
 
     n_unit = len(unit_sim)
 
-    indx_match = np.zeros(n_unit).astype(int)
-    indx_match[cenmsk_unit] = indx_match_cens
-    indx_match[~cenmsk_unit] = indx_match_sats
-
     for i, key in enumerate(keys_to_inherit):
         unit_sim["um_" + key] = np.zeros(n_unit)
         unit_sim["um_" + key][cenmsk_unit] = inherited_props_cens[i]
