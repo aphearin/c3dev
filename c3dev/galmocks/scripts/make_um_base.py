@@ -19,7 +19,7 @@ if __name__ == "__main__":
 
     t0 = time()
     um = Table(np.fromfile(args.um_fn, dtype=UM_DTYPE))
-    logsm_msk = um["sm"] > UM_LOGSM_CUT
+    logsm_msk = um["sm"] > 10 ** UM_LOGSM_CUT
     um = um[logsm_msk]
     t1 = time()
     unit = Table.read(args.unit_sim_fn, path="data")
