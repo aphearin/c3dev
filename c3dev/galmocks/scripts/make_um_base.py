@@ -48,6 +48,9 @@ if __name__ == "__main__":
 
     um["uber_host_haloid"] = um["id"][um["uber_host_indx"]]
     um["mhost"] = um["m"][um["uber_host_indx"]]
+    um["uber_host_pos"] = um["pos"][um["uber_host_indx"]]
+    um["host_delta_pos"] = um["pos"] - um["uber_host_pos"]
+
     unit["uber_host_haloid"] = unit["halo_id"][unit["uber_host_indx"]]
 
     cenmsk_um = um["uber_host_haloid"] == um["id"]
@@ -90,7 +93,15 @@ if __name__ == "__main__":
     print("{0:.1f} seconds to inherit from unit with crossmatch".format(t7 - t6))
 
     # Inherit from UM
-    keys_to_inherit_from_um = "m", "sm", "sfr", "uber_host_haloid", "id", "mhost"
+    keys_to_inherit_from_um = (
+        "m",
+        "sm",
+        "sfr",
+        "uber_host_haloid",
+        "id",
+        "mhost",
+        "host_delta_pos",
+    )
     for key in keys_to_inherit_from_um:
         output_mock["um_" + key] = um[key][galsampler_res.target_gals_selection_indx]
     output_mock[
