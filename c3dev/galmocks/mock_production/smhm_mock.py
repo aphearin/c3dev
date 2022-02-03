@@ -9,7 +9,7 @@ from ..galhalo_models.smhm import _get_cen_sat_percentile, mc_logsm
 from ..galhalo_models.smhm import DEFAULT_SMHM_SCATTER, DEFAULT_SMHM_PARAMS
 from ..data_loaders.load_unit_sims import read_unit_sim, UNIT_SIM_LBOX
 from ..data_loaders.load_umachine import read_sfr_snapshot, SMDPL_LBOX
-from ..utils.matchup import compute_uber_host_indx, calculate_indx_correspondence
+from ..utils.galmatch import compute_uber_host_indx, calculate_indx_correspondence
 
 
 TNG_KEYS_TO_INHERIT = ("SubhaloSFR", "SubhaloMassType")
