@@ -24,7 +24,7 @@ if __name__ == "__main__":
     print("{0:.1f} seconds to load UM".format(t1 - t0))
     print("{0:.1f} seconds to load UNIT".format(t2 - t1))
 
-    um["uber_host_indx"] = matchup.compute_uber_host_indx(um["upid"], um["id"])
+    um_uber_host_indx = matchup.compute_uber_host_indx(um["upid"], um["id"])
     t3 = time()
     unit["uber_host_indx"] = matchup.compute_uber_host_indx(
         unit["halo_upid"], unit["halo_id"]
@@ -33,7 +33,7 @@ if __name__ == "__main__":
     print("{0:.1f} seconds to compute UM hostid".format(t3 - t2))
     print("{0:.1f} seconds to compute UNIT hostid".format(t4 - t3))
 
-    um["uber_host_haloid"] = um["id"][um["uber_host_indx"]]
+    um["uber_host_haloid"] = um["id"][um_uber_host_indx]
     unit["uber_host_haloid"] = unit["halo_id"][unit["uber_host_indx"]]
     cenmsk_um = um["uber_host_haloid"] == um["id"]
     cenmsk_unit = unit["uber_host_haloid"] == unit["halo_id"]
