@@ -5,7 +5,7 @@ import argparse
 from time import time
 from astropy.table import Table
 from c3dev.galmocks.data_loaders.load_umachine import DTYPE as UM_DTYPE
-from c3dev.galmocks.utils import matchup, galmatch
+from c3dev.galmocks.utils import galmatch
 from halotools.utils import crossmatch, sliding_conditional_percentile
 from halotools.empirical_models import noisy_percentile
 
@@ -37,9 +37,9 @@ if __name__ == "__main__":
     print("{0:.1f} seconds to load UM".format(t1 - t0))
     print("{0:.1f} seconds to load UNIT".format(t2 - t1))
 
-    um["uber_host_indx"] = matchup.compute_uber_host_indx(um["upid"], um["id"])
+    um["uber_host_indx"] = galmatch.compute_uber_host_indx(um["upid"], um["id"])
     t3 = time()
-    unit["uber_host_indx"] = matchup.compute_uber_host_indx(
+    unit["uber_host_indx"] = galmatch.compute_uber_host_indx(
         unit["halo_upid"], unit["halo_id"]
     )
     t4 = time()
@@ -140,7 +140,7 @@ if __name__ == "__main__":
     source_props = (tng_phot_sample["logsm"], tng_phot_sample["lgssfr_perc"])
     target_props = (output_mock["um_logsm"], output_mock["lgssfr_perc_noisy"])
 
-    dd_match, indx_match = matchup.calculate_indx_correspondence(
+    dd_match, indx_match = galmatch.calculate_indx_correspondence(
         source_props, target_props
     )
     output_mock["tng_logsm"] = tng_phot_sample["logsm"][indx_match]
