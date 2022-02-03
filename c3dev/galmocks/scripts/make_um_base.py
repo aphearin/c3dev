@@ -100,20 +100,23 @@ if __name__ == "__main__":
         "galsampler_source_halo_ids"
     ] = galsampler_res.target_gals_source_halo_ids
     t8 = time()
-    print("{0:.1f} seconds to inherit from uM".format(t8 - t7))
+    print("{0:.1f} seconds to inherit from UM".format(t8 - t7))
 
     tng_phot_sample_fn = "/lcrc/project/halotools/C3GMC/TNG300-1/tng_phot_sample.h5"
     tng_phot_sample = Table.read(tng_phot_sample_fn, path="data")
+    tng_phot_sample["logsm"] = np.log10(tng_phot_sample["SubhaloMassType"][:, 4]) + 10
+
+    output_mock["um_logsm"] = np.log10(output_mock["um_sm"])
 
     output_mock["lgssfr"] = compute_lg_ssfr(
-        10 ** output_mock["logsm"], output_mock["um_sfr"] / 1e9
+        10 ** output_mock["um_logsm"], output_mock["um_sfr"] / 1e9
     )
     tng_phot_sample["lgssfr"] = compute_lg_ssfr(
         10 ** tng_phot_sample["logsm"], tng_phot_sample["SubhaloSFR"]
     )
 
     output_mock["lgssfr_perc"] = sliding_conditional_percentile(
-        output_mock["logsm"], output_mock["lgssfr"], 201
+        output_mock["um_logsm"], output_mock["lgssfr"], 201
     )
     tng_phot_sample["lgssfr_perc"] = sliding_conditional_percentile(
         tng_phot_sample["logsm"], tng_phot_sample["lgssfr"], 201
@@ -121,7 +124,7 @@ if __name__ == "__main__":
     output_mock["lgssfr_perc_noisy"] = noisy_percentile(output_mock["lgssfr_perc"], 0.9)
 
     source_props = (tng_phot_sample["logsm"], tng_phot_sample["lgssfr_perc"])
-    target_props = (output_mock["logsm"], output_mock["lgssfr_perc_noisy"])
+    target_props = (output_mock["um_logsm"], output_mock["lgssfr_perc_noisy"])
 
     dd_match, indx_match = matchup.calculate_indx_correspondence(
         source_props, target_props
@@ -129,9 +132,11 @@ if __name__ == "__main__":
     output_mock["tng_logsm"] = tng_phot_sample["logsm"][indx_match]
     output_mock["tng_lgssfr"] = tng_phot_sample["lgssfr"][indx_match]
     output_mock["tng_grizy"] = tng_phot_sample["grizy"][indx_match]
+    t9 = time()
+    print("{0:.1f} seconds to inherit from TNG".format(t9 - t8))
 
     # Write to disk
     output_mock.write(args.outname, path="data")
 
-    t9 = time()
-    print("{0:.1f} seconds total runtime".format(t9 - t0))
+    t10 = time()
+    print("{0:.1f} seconds total runtime".format(t10 - t0))
