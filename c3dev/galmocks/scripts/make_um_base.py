@@ -17,14 +17,14 @@ if __name__ == "__main__":
     args = parser.parse_args()
 
     t0 = time()
-    um = np.fromfile(args.um_fn, dtype=UM_DTYPE)
+    um = Table(np.fromfile(args.um_fn, dtype=UM_DTYPE))
     t1 = time()
     unit = Table.read(args.unit_sim_fn, path="data")
     t2 = time()
     print("{0:.1f} seconds to load UM".format(t1 - t0))
     print("{0:.1f} seconds to load UNIT".format(t2 - t1))
 
-    um_uber_host_indx = matchup.compute_uber_host_indx(um["upid"], um["id"])
+    um["uber_host_indx"] = matchup.compute_uber_host_indx(um["upid"], um["id"])
     t3 = time()
     unit["uber_host_indx"] = matchup.compute_uber_host_indx(
         unit["halo_upid"], unit["halo_id"]
@@ -33,8 +33,10 @@ if __name__ == "__main__":
     print("{0:.1f} seconds to compute UM hostid".format(t3 - t2))
     print("{0:.1f} seconds to compute UNIT hostid".format(t4 - t3))
 
-    um["uber_host_haloid"] = um["id"][um_uber_host_indx]
+    um["uber_host_haloid"] = um["id"][um["uber_host_indx"]]
+    um["mhost"] = um["m"][um["uber_host_indx"]]
     unit["uber_host_haloid"] = unit["halo_id"][unit["uber_host_indx"]]
+
     cenmsk_um = um["uber_host_haloid"] == um["id"]
     cenmsk_unit = unit["uber_host_haloid"] == unit["halo_id"]
 
@@ -55,7 +57,7 @@ if __name__ == "__main__":
     t6 = time()
     print("{0:.1f} seconds to galsample".format(t6 - t5))
 
-    keys_to_inherit = "m", "sm", "sfr", "uber_host_haloid"
+    keys_to_inherit = "m", "sm", "sfr", "uber_host_haloid", "id", "mhost"
     with h5py.File(args.outname, "w") as hdf:
         for key in keys_to_inherit:
             hdf[key] = um[key][galsampler_res.target_gals_selection_indx]
