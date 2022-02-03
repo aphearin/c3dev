@@ -51,7 +51,7 @@ def _get_data_block(*halo_properties):
     return np.vstack(halo_properties).T
 
 
-def calculate_halo_correspondence(source_halo_props, target_halo_props):
+def calculate_halo_correspondence(source_halo_props, target_halo_props, n_threads=-1):
     """Calculating indexing array defined by a statistical correspondence between
     source and target halos.
 
@@ -76,7 +76,7 @@ def calculate_halo_correspondence(source_halo_props, target_halo_props):
     X_source = _get_data_block(*source_halo_props)
     X_target = _get_data_block(*target_halo_props)
     source_tree = cKDTree(X_source)
-    dd_match, indx_match = source_tree.query(X_target)
+    dd_match, indx_match = source_tree.query(X_target, workers=n_threads)
     return dd_match, indx_match
 
 
