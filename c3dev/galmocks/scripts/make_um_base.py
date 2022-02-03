@@ -8,7 +8,6 @@ from c3dev.galmocks.data_loaders.load_umachine import DTYPE as UM_DTYPE
 from c3dev.galmocks.utils import matchup, galmatch
 from halotools.utils import crossmatch, sliding_conditional_percentile
 from halotools.empirical_models import noisy_percentile
-from c3dev.galmocks.utils import matchup
 
 
 def compute_lg_ssfr(mstar, sfr, lgssfr_q=-11.8, low_ssfr_cut=1e-12):
@@ -48,6 +47,7 @@ if __name__ == "__main__":
 
     um["uber_host_haloid"] = um["id"][um["uber_host_indx"]]
     um["mhost"] = um["m"][um["uber_host_indx"]]
+    um["rvir_host"] = um["r"][um["uber_host_indx"]] / 1000.0
     um["uber_host_pos"] = um["pos"][um["uber_host_indx"]]
     um["host_delta_pos"] = um["pos"] - um["uber_host_pos"]
 
@@ -82,6 +82,7 @@ if __name__ == "__main__":
         "halo_vy",
         "halo_vz",
         "halo_mvir",
+        "halo_rvir",
     )
     n_output_mock = galsampler_res.target_gals_target_halo_ids.size
     idxA, idxB = crossmatch(galsampler_res.target_gals_target_halo_ids, unit["halo_id"])
@@ -100,6 +101,7 @@ if __name__ == "__main__":
         "uber_host_haloid",
         "id",
         "mhost",
+        "rvir_host",
         "host_delta_pos",
     )
     for key in keys_to_inherit_from_um:
@@ -145,6 +147,26 @@ if __name__ == "__main__":
     output_mock["tng_grizy"] = tng_phot_sample["grizy"][indx_match]
     t9 = time()
     print("{0:.1f} seconds to inherit from TNG".format(t9 - t8))
+
+    # Assign positions
+    rhalo_ratio = output_mock["unit_halo_rvir"] * output_mock["um_rvir_host"]
+    dx = output_mock["um_delta_pos"][:, 0] * rhalo_ratio
+    dy = output_mock["um_delta_pos"][:, 1] * rhalo_ratio
+    dz = output_mock["um_delta_pos"][:, 2] * rhalo_ratio
+
+    output_mock["galaxy_x"] = output_mock["unit_halo_x"] + dx
+    output_mock["galaxy_y"] = output_mock["unit_halo_y"] + dy
+    output_mock["galaxy_z"] = output_mock["unit_halo_z"] + dz
+
+    output_mock["galaxy_vx"] = (
+        output_mock["unit_halo_vx"] + output_mock["um_delta_pos"][:, 3]
+    )
+    output_mock["galaxy_vy"] = (
+        output_mock["unit_halo_vy"] + output_mock["um_delta_pos"][:, 4]
+    )
+    output_mock["galaxy_vz"] = (
+        output_mock["unit_halo_vz"] + output_mock["um_delta_pos"][:, 5]
+    )
 
     # Write to disk
     output_mock.write(args.outname, path="data")
