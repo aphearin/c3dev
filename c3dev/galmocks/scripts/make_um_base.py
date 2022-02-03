@@ -6,8 +6,17 @@ from time import time
 from astropy.table import Table
 from c3dev.galmocks.data_loaders.load_umachine import DTYPE as UM_DTYPE
 from c3dev.galmocks.utils import matchup, galmatch
-from halotools.utils import crossmatch
-import h5py
+from halotools.utils import crossmatch, sliding_conditional_percentile
+from halotools.empirical_models import noisy_percentile
+from c3dev.galmocks.utils import matchup
+
+
+def compute_lg_ssfr(mstar, sfr, lgssfr_q=-11.8, low_ssfr_cut=1e-12):
+    raw_ssfr = sfr / mstar
+    ssfr_quenched = 10 ** np.random.normal(loc=lgssfr_q, scale=0.35, size=len(raw_ssfr))
+    ssfr = np.where(raw_ssfr < low_ssfr_cut, ssfr_quenched, raw_ssfr)
+    return np.log10(ssfr)
+
 
 UM_LOGSM_CUT = 9.0
 
@@ -95,6 +104,31 @@ if __name__ == "__main__":
 
     tng_phot_sample_fn = "/lcrc/project/halotools/C3GMC/TNG300-1/tng_phot_sample.h5"
     tng_phot_sample = Table.read(tng_phot_sample_fn, path="data")
+
+    output_mock["lgssfr"] = compute_lg_ssfr(
+        10 ** output_mock["logsm"], output_mock["um_sfr"] / 1e9
+    )
+    tng_phot_sample["lgssfr"] = compute_lg_ssfr(
+        10 ** tng_phot_sample["logsm"], tng_phot_sample["SubhaloSFR"]
+    )
+
+    output_mock["lgssfr_perc"] = sliding_conditional_percentile(
+        output_mock["logsm"], output_mock["lgssfr"], 201
+    )
+    tng_phot_sample["lgssfr_perc"] = sliding_conditional_percentile(
+        tng_phot_sample["logsm"], tng_phot_sample["lgssfr"], 201
+    )
+    output_mock["lgssfr_perc_noisy"] = noisy_percentile(output_mock["lgssfr_perc"], 0.9)
+
+    source_props = (tng_phot_sample["logsm"], tng_phot_sample["lgssfr_perc"])
+    target_props = (output_mock["logsm"], output_mock["lgssfr_perc_noisy"])
+
+    dd_match, indx_match = matchup.calculate_indx_correspondence(
+        source_props, target_props
+    )
+    output_mock["tng_logsm"] = tng_phot_sample["logsm"][indx_match]
+    output_mock["tng_lgssfr"] = tng_phot_sample["lgssfr"][indx_match]
+    output_mock["tng_grizy"] = tng_phot_sample["grizy"][indx_match]
 
     # Write to disk
     output_mock.write(args.outname, path="data")
