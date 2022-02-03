@@ -63,7 +63,7 @@ if __name__ == "__main__":
     keys_to_inherit = "m", "sm", "sfr", "uber_host_haloid", "id", "mhost"
     with h5py.File(args.outname, "w") as hdf:
         for key in keys_to_inherit:
-            hdf[key] = um[key][galsampler_res.target_gals_selection_indx]
+            hdf["um_" + key] = um[key][galsampler_res.target_gals_selection_indx]
         hdf["target_halo_ids"] = galsampler_res.target_gals_target_halo_ids
         hdf["source_halo_ids"] = galsampler_res.target_gals_source_halo_ids
 
